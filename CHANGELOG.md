@@ -6,3 +6,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-10**: feat: add Hinglish code-mixed persona support in simulator
 
+- **2026-05-12**: refactor: modularize agent state machine and LLM provider abstractions
+
