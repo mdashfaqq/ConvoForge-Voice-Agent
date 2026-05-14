@@ -8,3 +8,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-12**: refactor: modularize agent state machine and LLM provider abstractions
 
+- **2026-05-14**: style: format code and apply consistent naming conventions
+
