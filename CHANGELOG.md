@@ -10,3 +10,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-14**: style: format code and apply consistent naming conventions
 
+- **2026-05-15**: fix: prevent hallucinated interest rate injection in prompt outputs
+
