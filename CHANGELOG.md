@@ -12,3 +12,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-15**: fix: prevent hallucinated interest rate injection in prompt outputs
 
+- **2026-05-16**: feat: integrate Hugging Face, OpenAI, and Anthropic LLM providers
+
