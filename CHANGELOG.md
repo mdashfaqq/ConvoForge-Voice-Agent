@@ -14,3 +14,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-16**: feat: integrate Hugging Face, OpenAI, and Anthropic LLM providers
 
+- **2026-05-18**: feat: implement PostgreSQL storage for runs, transcripts, and scores
+
