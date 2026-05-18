@@ -16,3 +16,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-18**: feat: implement PostgreSQL storage for runs, transcripts, and scores
 
+- **2026-05-18**: docs: add architecture flowchart and setup instructions to README
+
