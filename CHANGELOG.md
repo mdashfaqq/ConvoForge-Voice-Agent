@@ -18,3 +18,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-18**: docs: add architecture flowchart and setup instructions to README
 
+- **2026-05-18**: test: add integration tests for API endpoints and eval runner
+
