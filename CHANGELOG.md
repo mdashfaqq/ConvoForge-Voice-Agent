@@ -20,3 +20,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-18**: test: add integration tests for API endpoints and eval runner
 
+- **2026-05-20**: feat: add FastAPI chat endpoint with session state tracking
+
