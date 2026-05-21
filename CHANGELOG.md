@@ -22,3 +22,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-20**: feat: add FastAPI chat endpoint with session state tracking
 
+- **2026-05-21**: feat: add LLM-as-judge scoring for task success and hallucination detection
+
