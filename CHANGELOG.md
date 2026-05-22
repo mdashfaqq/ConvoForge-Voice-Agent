@@ -24,3 +24,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-21**: feat: add LLM-as-judge scoring for task success and hallucination detection
 
+- **2026-05-22**: chore: add docker-compose for PostgreSQL and update gitignore
+
