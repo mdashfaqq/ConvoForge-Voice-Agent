@@ -28,3 +28,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-23**: feat: implement SQL analytics queries for prompt version comparison
 
+- **2026-05-23**: feat: implement state machine for GREET, QUALIFY, HANDLE_OBJECTION, CLOSE stages
+
