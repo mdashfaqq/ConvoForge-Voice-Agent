@@ -26,3 +26,5 @@ All notable changes to this project are documented here.
 
 - **2026-05-22**: chore: add docker-compose for PostgreSQL and update gitignore
 
+- **2026-05-23**: feat: implement SQL analytics queries for prompt version comparison
+
