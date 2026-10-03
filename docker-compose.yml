@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: salesvoice-postgres
+    environment:
+      POSTGRES_USER: salesvoice
+      POSTGRES_PASSWORD: salesvoice
+      POSTGRES_DB: salesvoice
+    ports:
+      - "5432:5432"
+    volumes:
+      - salesvoice_pgdata:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salesvoice -d salesvoice"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  salesvoice_pgdata:

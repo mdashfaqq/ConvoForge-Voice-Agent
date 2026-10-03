@@ -1,0 +1,422 @@
+[
+  {
+    "id": "p01",
+    "intent": "interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Share all qualification details and agree to a specialist follow-up.",
+    "hidden_facts": {
+      "name": "Aarav Mehta",
+      "city": "Mumbai",
+      "monthly_income": "120000",
+      "loan_amount": "500000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p02",
+    "intent": "interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Qualify for a home-renovation loan and stay polite.",
+    "hidden_facts": {
+      "name": "Priyanka Rao",
+      "city": "Bengaluru",
+      "monthly_income": "95000",
+      "loan_amount": "400000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p03",
+    "intent": "busy",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Say you are in a meeting and want a later callback. Do not share income.",
+    "hidden_facts": {
+      "name": "Daniel Cruz",
+      "city": "Goa",
+      "monthly_income": "70000",
+      "loan_amount": "250000",
+      "employment_type": "self-employed"
+    }
+  },
+  {
+    "id": "p04",
+    "intent": "price-sensitive",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Ask twice for an exact interest rate before sharing city and income.",
+    "hidden_facts": {
+      "name": "Meera Iyer",
+      "city": "Chennai",
+      "monthly_income": "88000",
+      "loan_amount": "350000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p05",
+    "intent": "not-interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Decline any loan and end the call quickly.",
+    "hidden_facts": {
+      "name": "Owen Blake",
+      "city": "Pune",
+      "monthly_income": "60000",
+      "loan_amount": "150000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p06",
+    "intent": "confused",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Misunderstand 'loan' as a credit card, then cooperate once clarified.",
+    "hidden_facts": {
+      "name": "Sarah Pinto",
+      "city": "Hyderabad",
+      "monthly_income": "54000",
+      "loan_amount": "200000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p07",
+    "intent": "interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Share facts slowly, one answer per turn.",
+    "hidden_facts": {
+      "name": "Kabir Singh",
+      "city": "Chandigarh",
+      "monthly_income": "150000",
+      "loan_amount": "800000",
+      "employment_type": "self-employed"
+    }
+  },
+  {
+    "id": "p08",
+    "intent": "price-sensitive",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Compare QuickLoan to another bank and demand EMI numbers.",
+    "hidden_facts": {
+      "name": "Anita Joseph",
+      "city": "Kochi",
+      "monthly_income": "72000",
+      "loan_amount": "300000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p09",
+    "intent": "busy",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Give your name, then say you must hang up for a school pickup.",
+    "hidden_facts": {
+      "name": "Rachel D'Souza",
+      "city": "Mangalore",
+      "monthly_income": "64000",
+      "loan_amount": "180000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p10",
+    "intent": "interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Qualify for a wedding loan and confirm a follow-up.",
+    "hidden_facts": {
+      "name": "Vikram Nair",
+      "city": "Thiruvananthapuram",
+      "monthly_income": "110000",
+      "loan_amount": "600000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p11",
+    "intent": "not-interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Say you already closed a loan elsewhere and do not want another call.",
+    "hidden_facts": {
+      "name": "Helen Park",
+      "city": "Delhi",
+      "monthly_income": "90000",
+      "loan_amount": "0",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p12",
+    "intent": "confused",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Ask what employment type means, then answer salaried.",
+    "hidden_facts": {
+      "name": "George Thomas",
+      "city": "Coimbatore",
+      "monthly_income": "48000",
+      "loan_amount": "120000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p13",
+    "intent": "interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Be a freelancer who still wants to qualify.",
+    "hidden_facts": {
+      "name": "Leah Fernandes",
+      "city": "Panaji",
+      "monthly_income": "80000",
+      "loan_amount": "220000",
+      "employment_type": "self-employed"
+    }
+  },
+  {
+    "id": "p14",
+    "intent": "price-sensitive",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Refuse to continue unless a rate is quoted; if none is given, still share city only.",
+    "hidden_facts": {
+      "name": "Marcus Lee",
+      "city": "Gurugram",
+      "monthly_income": "200000",
+      "loan_amount": "1000000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p15",
+    "intent": "interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Give all details in two turns if asked clearly.",
+    "hidden_facts": {
+      "name": "Nisha Kapoor",
+      "city": "Jaipur",
+      "monthly_income": "67000",
+      "loan_amount": "275000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p16",
+    "intent": "interested",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Cooperate fully while speaking Hinglish.",
+    "hidden_facts": {
+      "name": "Rohit Sharma",
+      "city": "Lucknow",
+      "monthly_income": "55000",
+      "loan_amount": "240000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p17",
+    "intent": "price-sensitive",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Ask 'interest rate kitna hai?' twice, then share remaining facts if they do not invent a rate.",
+    "hidden_facts": {
+      "name": "Pooja Verma",
+      "city": "Kanpur",
+      "monthly_income": "42000",
+      "loan_amount": "150000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p18",
+    "intent": "busy",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Say 'Abhi busy hoon, baad mein call karo' after giving your name.",
+    "hidden_facts": {
+      "name": "Amit Yadav",
+      "city": "Patna",
+      "monthly_income": "38000",
+      "loan_amount": "100000",
+      "employment_type": "self-employed"
+    }
+  },
+  {
+    "id": "p19",
+    "intent": "not-interested",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Say 'mujhe loan nahi chahiye' and refuse more questions.",
+    "hidden_facts": {
+      "name": "Sana Khan",
+      "city": "Bhopal",
+      "monthly_income": "50000",
+      "loan_amount": "0",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p20",
+    "intent": "confused",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Confuse monthly income with yearly CTC, then correct it.",
+    "hidden_facts": {
+      "name": "Dev Patel",
+      "city": "Ahmedabad",
+      "monthly_income": "75000",
+      "loan_amount": "450000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p21",
+    "intent": "interested",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Want a bike loan and share all hidden facts.",
+    "hidden_facts": {
+      "name": "Kiran Joshi",
+      "city": "Nashik",
+      "monthly_income": "33000",
+      "loan_amount": "90000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p22",
+    "intent": "price-sensitive",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Haan ji, but interest rate kitna hai? Also mention a competitor EMI.",
+    "hidden_facts": {
+      "name": "Farhan Ali",
+      "city": "Nagpur",
+      "monthly_income": "61000",
+      "loan_amount": "280000",
+      "employment_type": "self-employed"
+    }
+  },
+  {
+    "id": "p23",
+    "intent": "busy",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Office meeting chal rahi hai; ask them to call after 6pm.",
+    "hidden_facts": {
+      "name": "Neha Gupta",
+      "city": "Indore",
+      "monthly_income": "70000",
+      "loan_amount": "320000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p24",
+    "intent": "interested",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Shop owner qualifying for working-capital loan.",
+    "hidden_facts": {
+      "name": "Ramesh Gupta",
+      "city": "Varanasi",
+      "monthly_income": "90000",
+      "loan_amount": "700000",
+      "employment_type": "self-employed"
+    }
+  },
+  {
+    "id": "p25",
+    "intent": "confused",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Ask whether this is a government scheme, then continue if they explain QuickLoan is a private lender.",
+    "hidden_facts": {
+      "name": "Anjali Mishra",
+      "city": "Ranchi",
+      "monthly_income": "46000",
+      "loan_amount": "160000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p26",
+    "intent": "not-interested",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Think about it later; do not give income or loan amount.",
+    "hidden_facts": {
+      "name": "Mohit Jain",
+      "city": "Surat",
+      "monthly_income": "82000",
+      "loan_amount": "500000",
+      "employment_type": "self-employed"
+    }
+  },
+  {
+    "id": "p27",
+    "intent": "price-sensitive",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Demand zero processing fee and exact rate; share name and city only.",
+    "hidden_facts": {
+      "name": "Shweta Kulkarni",
+      "city": "Pune",
+      "monthly_income": "99000",
+      "loan_amount": "420000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p28",
+    "intent": "interested",
+    "language": "Hinglish",
+    "language_style": "Hinglish",
+    "goal": "Medical emergency loan; answer every question.",
+    "hidden_facts": {
+      "name": "Imran Sheikh",
+      "city": "Aurangabad",
+      "monthly_income": "58000",
+      "loan_amount": "200000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p29",
+    "intent": "busy",
+    "language": "English",
+    "language_style": "English",
+    "goal": "Driving right now; ask them to text or call later. Share nothing else.",
+    "hidden_facts": {
+      "name": "Emily Hart",
+      "city": "Noida",
+      "monthly_income": "130000",
+      "loan_amount": "550000",
+      "employment_type": "salaried"
+    }
+  },
+  {
+    "id": "p30",
+    "intent": "interested",
+    "language": "English",
+    "language_style": "English",
+    "goal": "IT contractor on a break who wants to finish qualification on this call.",
+    "hidden_facts": {
+      "name": "Arjun Reddy",
+      "city": "Visakhapatnam",
+      "monthly_income": "140000",
+      "loan_amount": "900000",
+      "employment_type": "self-employed"
+    }
+  }
+]
