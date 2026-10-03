@@ -4,6 +4,7 @@ const state = {
   currentState: 'GREET',
   listening: false,
   busy: false,
+  handsFree: false,
 };
 
 const transcript = document.querySelector('#transcript');
@@ -15,6 +16,8 @@ const voiceStatus = document.querySelector('#voice-status');
 const resetButton = document.querySelector('#reset-button');
 const sessionLabel = document.querySelector('#session-label');
 const connectionLabel = document.querySelector('#connection-label');
+const languageSelect = document.querySelector('#language-select');
+const handsfreeToggle = document.querySelector('#handsfree-toggle');
 
 const labels = {
   name: 'Name',
@@ -98,7 +101,11 @@ async function sendMessage(message) {
     const response = await fetch('/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_id: state.sessionId, message: text }),
+      body: JSON.stringify({
+        session_id: state.sessionId,
+        message: text,
+        language: languageSelect.value,
+      }),
     });
     const responseText = await response.text();
     let data;
@@ -117,7 +124,7 @@ async function sendMessage(message) {
     updateRail(data.state);
     sessionLabel.textContent = state.sessionId;
     connectionLabel.textContent = 'API connected';
-    speak(data.reply);
+    speak(data.reply, languageSelect.value);
   } catch (error) {
     connectionLabel.textContent = 'API issue';
     showError(error.message);
@@ -127,11 +134,11 @@ async function sendMessage(message) {
   }
 }
 
-function speak(text) {
+function speak(text, language = 'english') {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-IN';
+  utterance.lang = language === 'hindi' ? 'hi-IN' : 'en-IN';
   utterance.rate = 1;
   window.speechSynthesis.speak(utterance);
 }
@@ -165,6 +172,7 @@ if (SpeechRecognition) {
   recognition.maxAlternatives = 3;
   let finalTranscript = '';
   recognition.onstart = () => {
+    recognition.lang = languageSelect.value === 'hindi' ? 'hi-IN' : 'en-IN';
     finalTranscript = '';
     input.value = '';
     state.listening = true;
@@ -191,7 +199,8 @@ if (SpeechRecognition) {
     state.listening = false;
     micButton.classList.remove('active');
     voiceStatus.classList.remove('listening');
-    if (heard && !state.busy) voiceStatus.textContent = 'Review the transcript, then press Send';
+    if (heard && !state.busy && state.handsFree) sendMessage(heard);
+    else if (heard && !state.busy) voiceStatus.textContent = 'Review the transcript, then press Send';
     else if (!state.busy) voiceStatus.textContent = 'Text or voice input';
   };
   micButton.addEventListener('click', () => {
@@ -203,3 +212,8 @@ if (SpeechRecognition) {
   micButton.title = 'Speech recognition is not supported in this browser';
   voiceStatus.textContent = 'Voice input is unavailable in this browser';
 }
+
+handsfreeToggle.addEventListener('change', () => {
+  state.handsFree = handsfreeToggle.checked;
+  voiceStatus.textContent = state.handsFree ? 'Hands-free mode enabled' : 'Text or voice input';
+});

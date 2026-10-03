@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from typing import Literal
 
 from agent.chat import SalesAgent
 from agent.session import SessionStore
@@ -28,6 +29,7 @@ class ChatRequest(BaseModel):
     session_id: str = Field(min_length=1)
     message: str = Field(min_length=1)
     prompt_version: str | None = None
+    language: Literal["english", "hinglish", "hindi"] = "english"
 
 
 class ChatResponse(BaseModel):
@@ -52,7 +54,12 @@ def health() -> dict:
 @app.post("/chat", response_model=ChatResponse)
 def chat(body: ChatRequest) -> ChatResponse:
     try:
-        result = get_agent().chat(body.session_id, body.message, body.prompt_version)
+        result = get_agent().chat(
+            body.session_id,
+            body.message,
+            body.prompt_version,
+            body.language,
+        )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:

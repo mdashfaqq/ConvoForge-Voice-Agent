@@ -29,7 +29,7 @@ body { background: var(--paper); }
 .conversation-panel, .details-section { border-color: rgba(205, 213, 221, .9); box-shadow: var(--shadow); }
 .conversation-panel { min-height: 700px; border-radius: 16px; }
 .conversation-heading { padding: 20px 26px; }
-.contact-chip .avatar { width: 40px; height: 40px; background: #f6c4b5; box-shadow: inset 0 0 0 4px #fff; }
+.contact-chip .avatar { width: 40px; height: 40px; display: grid; place-items: center; background: #f6c4b5; box-shadow: inset 0 0 0 4px #fff; }
 .session-label { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fafbfc; }
 .state-rail { padding: 24px 26px 18px; background: #fbfcfc; }
 .state-step span { width: 29px; height: 29px; transition: .25s ease; }
@@ -47,9 +47,12 @@ body { background: var(--paper); }
 .composer { padding: 6px; border: 1px solid #dce2e7; border-radius: 13px; background: #fff; box-shadow: 0 8px 20px rgba(22, 35, 54, .05); }
 .composer input { height: 40px; border: 0; background: transparent; }
 .composer input:focus { box-shadow: none; }
+.composer select { height: 40px; padding: 0 8px; border: 0; border-left: 1px solid #e7ebef; outline: none; color: #596579; background: #fff; font: 10px 'DM Mono', monospace; }
 .mic-button { width: 40px; height: 40px; border-radius: 9px; }
 .send-button { height: 40px; border-radius: 9px; background: var(--coral); }
 .send-button:disabled { cursor: wait; opacity: .55; }
+.handsfree-control { display: inline-flex; align-items: center; gap: 7px; margin: 10px 4px 0; color: #667386; font: 10px 'DM Mono', monospace; }
+.handsfree-control input { width: 14px; height: 14px; accent-color: var(--coral); }
 .details-column { gap: 19px; }
 .details-section { padding: 23px; border-radius: 14px; }
 .lead-summary { position: relative; overflow: hidden; }
@@ -77,5 +80,6 @@ body { background: var(--paper); }
   .conversation-panel { min-height: calc(100vh - 120px); border-radius: 13px; }
   .transcript { padding-left: 17px; padding-right: 17px; }
   .composer-wrap { padding-left: 16px; padding-right: 16px; }
+  .composer select { max-width: 82px; }
   .message { max-width: 92%; }
 }

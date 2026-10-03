@@ -68,7 +68,13 @@ class SalesAgent:
             raise RuntimeError(f"LLM client is not configured: {self._llm_error}")
         return self._llm
 
-    def chat(self, session_id: str, message: str, prompt_version: str | None = None) -> dict:
+    def chat(
+        self,
+        session_id: str,
+        message: str,
+        prompt_version: str | None = None,
+        language: str = "english",
+    ) -> dict:
         version = prompt_version or self.prompt_version
         session = self.store.get_or_create(session_id, prompt_version=version)
         session.prompt_version = version
@@ -81,7 +87,14 @@ class SalesAgent:
 
         raw = self.llm.complete(
             [
-                {"role": "system", "content": render_system_prompt(session) + EXTRACT_INSTRUCTIONS},
+                {
+                    "role": "system",
+                    "content": (
+                        render_system_prompt(session)
+                        + EXTRACT_INSTRUCTIONS
+                        + _language_instruction(language)
+                    ),
+                },
                 *[{"role": turn["role"], "content": turn["content"]} for turn in session.transcript],
             ],
             temperature=self.temperature,
@@ -106,6 +119,15 @@ class SalesAgent:
         ):
             session.state = AgentState.END
         return _payload(session, reply)
+
+
+def _language_instruction(language: str) -> str:
+    instructions = {
+        "english": "Reply in clear, natural English.",
+        "hinglish": "Reply in natural Indian Hinglish, mixing simple Hindi and English.",
+        "hindi": "Reply in clear, conversational Hindi using Devanagari script.",
+    }
+    return f"\n\nResponse language: {instructions.get(language, instructions['english'])}"
 
 
 def _payload(session: Session, reply: str) -> dict:
