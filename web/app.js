@@ -6,6 +6,8 @@ const state = {
   busy: false,
   handsFree: false,
   agentConfig: null,
+  voiceState: 'IDLE',
+  voiceGeneration: 0,
 };
 
 const transcript = document.querySelector('#transcript');
@@ -37,6 +39,32 @@ function renderGuardrails(guardrails = []) {
   )).join('');
 }
 
+function renderLanguages(languages = []) {
+  languageSelect.innerHTML = languages.map((language) => (
+    `<option value="${language.id}">${language.label}</option>`
+  )).join('');
+  if (!languages.length) languageSelect.innerHTML = '<option value="default">Default</option>';
+}
+
+function activeLanguage() {
+  return state.agentConfig?.languages?.find((language) => language.id === languageSelect.value)
+    || state.agentConfig?.languages?.[0]
+    || { id: 'default', stt_locale: navigator.language, tts_locale: navigator.language };
+}
+
+function setVoiceState(nextState) {
+  state.voiceState = nextState;
+  const labelsByState = {
+    IDLE: 'Conversation ready',
+    LISTENING: 'Listening...',
+    PROCESSING: 'Processing...',
+    SPEAKING: 'Speaking...',
+    ERROR: 'Voice unavailable',
+    COMPLETED: 'Conversation complete',
+  };
+  if (!state.busy || nextState !== 'IDLE') voiceStatus.textContent = labelsByState[nextState] || 'Conversation ready';
+}
+
 async function loadAgentConfig() {
   try {
     const response = await fetch('/agent-config');
@@ -46,11 +74,13 @@ async function loadAgentConfig() {
     document.title = `${config.name} | ConvoForge`;
     document.querySelector('#agent-name').textContent = config.name;
     document.querySelector('#agent-role').textContent = config.role;
-    document.querySelector('#agent-avatar').textContent = config.name.slice(0, 1).toUpperCase();
+    document.querySelector('#agent-avatar').textContent = config.avatar?.initial
+      || config.name.slice(0, 1).toUpperCase();
     document.querySelector('#prompt-version').textContent = config.goal?.type || 'active';
     document.querySelector('#agent-presence').textContent = `${config.name} is ready`;
     renderAgentFields(config.fields || []);
     renderGuardrails(config.guardrails || []);
+    renderLanguages(config.languages || []);
     const emptyState = config.ui?.empty_state || {};
     document.querySelector('#empty-eyebrow').textContent = emptyState.eyebrow || 'READY WHEN YOU ARE';
     document.querySelector('#empty-title').textContent = emptyState.title || 'How can I help?';
@@ -59,6 +89,7 @@ async function loadAgentConfig() {
       || 'Tell me what you need and I will help with the next useful step.';
   } catch (error) {
     connectionLabel.textContent = 'Configuration issue';
+    setVoiceState('ERROR');
     showError(error.message);
   }
 }
@@ -69,7 +100,9 @@ function addMessage(role, text) {
   item.className = `message ${role}`;
   const avatar = document.createElement('span');
   avatar.className = `mini-avatar ${role === 'user' ? 'user-avatar' : ''}`;
-  avatar.textContent = role === 'user' ? 'You' : 'P';
+  avatar.textContent = role === 'user'
+    ? 'You'
+    : state.agentConfig?.avatar?.initial || state.agentConfig?.name?.slice(0, 1).toUpperCase() || 'A';
   const content = document.createElement('div');
   const bubble = document.createElement('div');
   bubble.className = 'message-bubble';
@@ -130,7 +163,12 @@ function setBusy(busy) {
   input.disabled = busy;
   form.querySelector('.send-button').disabled = busy;
   const agentName = state.agentConfig?.name || 'Agent';
-  voiceStatus.textContent = busy ? `${agentName} is thinking...` : 'Text or voice input';
+  if (busy) {
+    state.voiceState = 'PROCESSING';
+    voiceStatus.textContent = `${agentName} is thinking...`;
+  } else if (state.voiceState === 'PROCESSING') {
+    setVoiceState('IDLE');
+  }
 }
 
 async function sendMessage(message) {
@@ -145,6 +183,7 @@ async function sendMessage(message) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         session_id: state.sessionId,
+        agent_id: state.agentConfig?.id,
         message: text,
         language: languageSelect.value,
       }),
@@ -179,8 +218,11 @@ async function sendMessage(message) {
 function speak(text, language = 'english') {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
+  const generation = state.voiceGeneration;
+  const languageConfig = state.agentConfig?.languages?.find((item) => item.id === language)
+    || activeLanguage();
   const utterance = new SpeechSynthesisUtterance(text);
-  const voiceLanguage = language === 'hindi' ? 'hi-IN' : 'en-IN';
+  const voiceLanguage = languageConfig.tts_locale;
   utterance.lang = voiceLanguage;
   utterance.rate = 0.96;
   utterance.pitch = 1;
@@ -190,11 +232,20 @@ function speak(text, language = 'english') {
     || voices.find((voice) => voice.lang.startsWith(voiceLanguage.slice(0, 2)))
     || null;
   utterance.onstart = () => {
-    if (state.handsFree) voiceStatus.textContent = 'Speaking...';
+    if (generation !== state.voiceGeneration) return;
+    setVoiceState('SPEAKING');
+    if (state.handsFree && state.currentState !== 'END' && !state.busy) {
+      window.startVoiceCapture?.(false);
+    }
   };
   utterance.onend = () => {
+    if (generation !== state.voiceGeneration) return;
     if (state.handsFree && state.currentState !== 'END' && !state.busy) {
-      window.startVoiceCapture?.();
+      window.startVoiceCapture?.(true);
+    } else if (state.currentState === 'END') {
+      setVoiceState('COMPLETED');
+    } else {
+      setVoiceState('IDLE');
     }
   };
   window.speechSynthesis.speak(utterance);
@@ -207,6 +258,7 @@ form.addEventListener('submit', (event) => {
 
 resetButton.addEventListener('click', () => {
   state.sessionId = `desk-${crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now()}`;
+  window.resetVoiceRuntime?.();
   state.fields = {};
   state.currentState = 'GREET';
   transcript.innerHTML = '';
@@ -223,15 +275,17 @@ resetButton.addEventListener('click', () => {
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SpeechRecognition) {
-  const SILENCE_TIMEOUT = 2000;
+  const SILENCE_TIMEOUT = Number(state.agentConfig?.voice?.silence_timeout_ms) || 2000;
   const recognition = new SpeechRecognition();
-  recognition.lang = 'en-IN';
   recognition.continuous = true;
   recognition.interimResults = true;
   recognition.maxAlternatives = 3;
   let finalTranscript = '';
   let interimTranscript = '';
+  let recognitionStarted = false;
+  let speechDetected = false;
   let shouldKeepListening = false;
+  let userExplicitlyStopped = false;
   let silenceTimer = null;
   let restartTimer = null;
 
@@ -244,25 +298,35 @@ if (SpeechRecognition) {
 
   const currentTranscript = () => `${finalTranscript} ${interimTranscript}`.trim();
 
-  const finishListening = (submit = false) => {
+  const cancelAgentSpeech = () => {
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  const finishListening = (submit = false, explicitStop = true) => {
     shouldKeepListening = false;
+    userExplicitlyStopped = explicitStop;
     clearListeningTimers();
     const heard = currentTranscript();
+    recognitionStarted = false;
+    speechDetected = false;
     state.listening = false;
     micButton.classList.remove('active');
     voiceStatus.classList.remove('listening');
     try {
-      recognition.stop();
+      if (explicitStop) recognition.stop();
+      else recognition.abort();
     } catch {
-      // The recognition engine may already have ended itself.
+      // The recognition engine may already have ended.
     }
     if (!heard || state.busy) {
-      voiceStatus.textContent = 'Text or voice input';
+      setVoiceState('IDLE');
       return;
     }
     input.value = heard;
     if (submit) {
-      voiceStatus.textContent = 'Processing...';
+      setVoiceState('PROCESSING');
       sendMessage(heard);
     } else {
       voiceStatus.textContent = 'Review the transcript, then press Send';
@@ -270,17 +334,23 @@ if (SpeechRecognition) {
   };
 
   const scheduleSilenceStop = () => {
+    if (!speechDetected) return;
     window.clearTimeout(silenceTimer);
-    silenceTimer = window.setTimeout(() => finishListening(state.handsFree), SILENCE_TIMEOUT);
+    silenceTimer = window.setTimeout(() => finishListening(state.handsFree), silenceTimeout());
   };
 
-  const startListening = () => {
+  const startListening = (continueTranscript = false) => {
     if (state.busy || state.listening) return;
     shouldKeepListening = true;
-    finalTranscript = '';
-    interimTranscript = '';
-    input.value = '';
+    userExplicitlyStopped = false;
+    if (!continueTranscript) {
+      finalTranscript = '';
+      interimTranscript = '';
+      input.value = '';
+    }
+    setVoiceState('LISTENING');
     try {
+      recognition.lang = activeLanguage().stt_locale;
       recognition.start();
     } catch {
       voiceStatus.textContent = 'Still listening...';
@@ -289,15 +359,42 @@ if (SpeechRecognition) {
 
   window.startVoiceCapture = startListening;
 
+  window.resetVoiceRuntime = () => {
+    state.voiceGeneration += 1;
+    shouldKeepListening = false;
+    userExplicitlyStopped = true;
+    recognitionStarted = false;
+    speechDetected = false;
+    clearListeningTimers();
+    cancelAgentSpeech();
+    try {
+      recognition.abort();
+    } catch {
+      // The recognition engine may already have ended.
+    }
+    finalTranscript = '';
+    interimTranscript = '';
+    state.listening = false;
+    micButton.classList.remove('active');
+    voiceStatus.classList.remove('listening');
+    setVoiceState('IDLE');
+  };
+
   recognition.onstart = () => {
-    recognition.lang = languageSelect.value === 'hindi' ? 'hi-IN' : 'en-IN';
+    recognitionStarted = true;
     state.listening = true;
     micButton.classList.add('active');
-    voiceStatus.textContent = 'Listening...';
+    setVoiceState('LISTENING');
     voiceStatus.classList.add('listening');
+  };
+  recognition.onspeechstart = () => {
+    speechDetected = true;
+    cancelAgentSpeech();
+    setVoiceState('LISTENING');
     scheduleSilenceStop();
   };
   recognition.onresult = (event) => {
+    speechDetected = true;
     interimTranscript = '';
     for (let index = event.resultIndex; index < event.results.length; index += 1) {
       const result = event.results[index];
@@ -312,28 +409,36 @@ if (SpeechRecognition) {
       else interimTranscript += transcriptText;
     }
     input.value = `${finalTranscript}${interimTranscript}`.trim();
-    voiceStatus.textContent = interimTranscript ? 'Still listening...' : 'Listening...';
+    setVoiceState('LISTENING');
+    scheduleSilenceStop();
+  };
+  recognition.onspeechend = () => {
     scheduleSilenceStop();
   };
   recognition.onerror = (event) => {
-    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-      finishListening(false);
-      voiceStatus.textContent = 'Microphone permission is required for voice input.';
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed' || event.error === 'audio-capture') {
+      finishListening(false, true);
+      setVoiceState('ERROR');
+      voiceStatus.textContent = event.error === 'audio-capture'
+        ? 'Microphone could not be captured.'
+        : 'Microphone permission is required for voice input.';
       return;
     }
     if (shouldKeepListening) {
       voiceStatus.textContent = 'Still listening...';
-      scheduleSilenceStop();
+      if (event.error === 'audio-capture') setVoiceState('ERROR');
     }
   };
   recognition.onend = () => {
-    if (shouldKeepListening && !state.busy) {
+    recognitionStarted = false;
+    if (shouldKeepListening && !userExplicitlyStopped && !state.busy) {
       voiceStatus.textContent = 'Still listening...';
       restartTimer = window.setTimeout(() => {
         try {
+          recognition.lang = activeLanguage().stt_locale;
           recognition.start();
         } catch {
-          scheduleSilenceStop();
+          if (shouldKeepListening) restartTimer = window.setTimeout(() => recognition.start(), 250);
         }
       }, 120);
       return;
@@ -345,7 +450,7 @@ if (SpeechRecognition) {
     }
   };
   micButton.addEventListener('click', () => {
-    if (state.listening) finishListening(state.handsFree);
+    if (state.listening) finishListening(state.handsFree, true);
     else startListening();
   });
 } else {

@@ -52,6 +52,13 @@ class AgentUI(BaseModel):
     empty_state: EmptyState = Field(default_factory=EmptyState)
 
 
+class LanguageOption(BaseModel):
+    id: str
+    label: str
+    stt_locale: str
+    tts_locale: str
+
+
 class AgentConfig(BaseModel):
     id: str
     name: str
@@ -65,6 +72,8 @@ class AgentConfig(BaseModel):
     rules: list[str] = Field(default_factory=list)
     guardrails: list[str] = Field(default_factory=list)
     ui: AgentUI = Field(default_factory=AgentUI)
+    avatar: dict[str, Any] = Field(default_factory=dict)
+    languages: list[LanguageOption] = Field(default_factory=list)
     voice: dict[str, Any] = Field(default_factory=dict)
 
     @property

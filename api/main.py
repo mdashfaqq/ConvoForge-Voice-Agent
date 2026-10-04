@@ -4,7 +4,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from typing import Literal
 
 from agent.agent_config import load_agent_config
 from agent.chat import SalesAgent
@@ -37,8 +36,9 @@ def get_agent() -> SalesAgent | VoiceAgent:
 class ChatRequest(BaseModel):
     session_id: str = Field(min_length=1)
     message: str = Field(min_length=1)
+    agent_id: str | None = None
     prompt_version: str | None = None
-    language: Literal["english", "hinglish", "hindi"] = "english"
+    language: str = "english"
 
 
 class ChatResponse(BaseModel):
@@ -82,7 +82,10 @@ def agent_config() -> dict:
 @app.post("/chat", response_model=ChatResponse)
 def chat(body: ChatRequest) -> ChatResponse:
     try:
-        result = get_agent().chat(
+        active_agent = get_agent()
+        if body.agent_id and isinstance(active_agent, VoiceAgent) and body.agent_id != active_agent.config.id:
+            raise HTTPException(status_code=400, detail="Requested agent is not active")
+        result = active_agent.chat(
             body.session_id,
             body.message,
             body.prompt_version,

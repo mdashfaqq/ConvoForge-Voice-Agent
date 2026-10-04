@@ -1,6 +1,21 @@
 id: quickloan
 name: Priya
 role: Personal Loan Specialist
+avatar:
+  initial: P
+languages:
+  - id: english
+    label: English
+    stt_locale: en-IN
+    tts_locale: en-IN
+  - id: hinglish
+    label: Hinglish
+    stt_locale: en-IN
+    tts_locale: en-IN
+  - id: hindi
+    label: Hindi
+    stt_locale: hi-IN
+    tts_locale: hi-IN
 greeting: Hi, I am Priya. Tell me what you are looking for and I will help.
 closing: Thanks for speaking with me. A specialist will follow up with the next steps.
 ui:

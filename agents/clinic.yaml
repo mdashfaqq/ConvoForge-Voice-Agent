@@ -1,6 +1,17 @@
 id: clinic
 name: Anya
 role: Clinic Reception Assistant
+avatar:
+  initial: A
+languages:
+  - id: english
+    label: English
+    stt_locale: en-IN
+    tts_locale: en-IN
+  - id: hindi
+    label: Hindi
+    stt_locale: hi-IN
+    tts_locale: hi-IN
 greeting: Hello, I am Anya. How can I help with your appointment today?
 closing: Thanks. I have noted that down and the clinic team will confirm the next step.
 ui:

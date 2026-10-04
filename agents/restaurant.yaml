@@ -1,6 +1,13 @@
 id: restaurant
 name: Ava
 role: Reservation Assistant
+avatar:
+  initial: A
+languages:
+  - id: english
+    label: English
+    stt_locale: en-IN
+    tts_locale: en-IN
 greeting: Hi, I am Ava. When would you like to visit us?
 closing: Thanks. I have noted your reservation request and the team will confirm availability.
 ui:
