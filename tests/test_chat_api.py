@@ -36,8 +36,6 @@ def test_chat_endpoint_with_fake_llm():
     assert "Priya" in body["reply"]
     assert body["state"] == "QUALIFY"
     assert llm.calls == 1
-
-
 def test_incoming_voice_returns_speech_gather():
     client = TestClient(api_main.app)
 
