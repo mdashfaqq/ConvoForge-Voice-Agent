@@ -26,8 +26,8 @@
       </nav>
 
       <div class="sidebar-foot">
-        <div class="agent-presence"><span class="presence-dot"></span><span>Priya is ready</span></div>
-        <span class="version-label">Prompt <b id="prompt-version">v1</b></span>
+        <div class="agent-presence"><span class="presence-dot"></span><span id="agent-presence">Agent ready</span></div>
+        <span class="version-label">Goal <b id="prompt-version">active</b></span>
       </div>
     </aside>
 
@@ -52,14 +52,14 @@
 
           <div class="conversation-mode" aria-live="polite">
             <span class="mode-dot" aria-hidden="true"></span>
-            <span id="conversation-mode">Getting to know what you need</span>
+            <span id="conversation-mode">Conversation ready</span>
           </div>
 
           <div class="transcript" id="transcript" aria-live="polite">
             <div class="empty-state" id="empty-state">
-              <span class="empty-kicker">Ready when you are</span>
-              <h2>Start a conversation.</h2>
-              <p>Type a message or use the microphone. Your assistant will understand the request and help with the next useful step.</p>
+              <span class="empty-kicker" id="empty-eyebrow">READY WHEN YOU ARE</span>
+              <h2 id="empty-title">How can I help?</h2>
+              <p id="empty-description">Tell me what you need and I will help with the next useful step.</p>
             </div>
           </div>
 
@@ -82,18 +82,14 @@
 
         <aside class="details-column" id="lead" aria-label="Conversation context">
           <section class="details-section lead-summary">
-            <div class="section-heading"><div><p class="eyebrow">Conversation context</p><h2>Known details</h2></div><span class="completion" id="completion">0%</span></div>
+            <div class="section-heading"><div><p class="eyebrow">Conversation context</p><h2>What I know</h2></div><span class="completion" id="completion">0 details captured</span></div>
             <div class="progress-track"><span id="progress-bar"></span></div>
             <dl class="field-list" id="field-list"></dl>
           </section>
 
           <section class="details-section call-pulse" id="quality">
-            <div class="section-heading"><div><p class="eyebrow">Guardrails</p><h2>Call pulse</h2></div><span class="pulse-icon">✦</span></div>
-            <ul class="guardrail-list">
-              <li><span class="check">✓</span><span>No approval promises</span></li>
-              <li><span class="check">✓</span><span>No invented rates or EMI</span></li>
-              <li><span class="check">✓</span><span>Callback when busy</span></li>
-            </ul>
+            <div class="section-heading"><div><p class="eyebrow">Agent safety</p><h2>Active safeguards</h2></div><span class="pulse-icon">✦</span></div>
+            <ul class="guardrail-list" id="guardrail-list"></ul>
           </section>
 
           <section class="tip-panel">

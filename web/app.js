@@ -30,6 +30,13 @@ function renderAgentFields(fields = []) {
   )).join('');
 }
 
+function renderGuardrails(guardrails = []) {
+  const list = document.querySelector('#guardrail-list');
+  list.innerHTML = guardrails.map((guardrail) => (
+    `<li><span class="check">✓</span><span>${guardrail}</span></li>`
+  )).join('');
+}
+
 async function loadAgentConfig() {
   try {
     const response = await fetch('/agent-config');
@@ -41,9 +48,15 @@ async function loadAgentConfig() {
     document.querySelector('#agent-role').textContent = config.role;
     document.querySelector('#agent-avatar').textContent = config.name.slice(0, 1).toUpperCase();
     document.querySelector('#prompt-version').textContent = config.goal?.type || 'active';
+    document.querySelector('#agent-presence').textContent = `${config.name} is ready`;
     renderAgentFields(config.fields || []);
-    const emptyCopy = document.querySelector('#empty-state p');
-    if (emptyCopy) emptyCopy.textContent = config.goal?.description || 'Tell me what you need help with.';
+    renderGuardrails(config.guardrails || []);
+    const emptyState = config.ui?.empty_state || {};
+    document.querySelector('#empty-eyebrow').textContent = emptyState.eyebrow || 'READY WHEN YOU ARE';
+    document.querySelector('#empty-title').textContent = emptyState.title || 'How can I help?';
+    document.querySelector('#empty-description').textContent = emptyState.description
+      || config.goal?.description
+      || 'Tell me what you need and I will help with the next useful step.';
   } catch (error) {
     connectionLabel.textContent = 'Configuration issue';
     showError(error.message);
@@ -63,7 +76,8 @@ function addMessage(role, text) {
   bubble.textContent = text;
   const meta = document.createElement('div');
   meta.className = 'message-meta';
-  meta.textContent = role === 'user' ? 'Sent just now' : 'Priya • Just now';
+  const agentName = state.agentConfig?.name || 'Agent';
+  meta.textContent = role === 'user' ? 'Sent just now' : `${agentName} • Just now`;
   content.append(bubble, meta);
   item.append(avatar, content);
   transcript.append(item);
@@ -92,7 +106,8 @@ function updateLead(fields = {}) {
     if (value) complete += 1;
   });
   const percent = total ? Math.round((complete / total) * 100) : 0;
-  document.querySelector('#completion').textContent = `${percent}%`;
+  const detailWord = complete === 1 ? 'detail' : 'details';
+  document.querySelector('#completion').textContent = `${complete} ${detailWord} captured`;
   document.querySelector('#progress-bar').style.width = `${percent}%`;
 }
 
@@ -114,7 +129,8 @@ function setBusy(busy) {
   state.busy = busy;
   input.disabled = busy;
   form.querySelector('.send-button').disabled = busy;
-  voiceStatus.textContent = busy ? 'Priya is thinking...' : 'Text or voice input';
+  const agentName = state.agentConfig?.name || 'Agent';
+  voiceStatus.textContent = busy ? `${agentName} is thinking...` : 'Text or voice input';
 }
 
 async function sendMessage(message) {
@@ -196,7 +212,8 @@ resetButton.addEventListener('click', () => {
   transcript.innerHTML = '';
   const fresh = document.createElement('div');
   fresh.className = 'empty-state';
-  fresh.innerHTML = '<span class="empty-kicker">Ready when you are</span><h2>Start a conversation.</h2><p>Tell the assistant what you need help with, by voice or text.</p>';
+  const emptyState = state.agentConfig?.ui?.empty_state || {};
+  fresh.innerHTML = `<span class="empty-kicker">${emptyState.eyebrow || 'READY WHEN YOU ARE'}</span><h2>${emptyState.title || 'How can I help?'}</h2><p>${emptyState.description || 'Tell the assistant what you need help with, by voice or text.'}</p>`;
   transcript.append(fresh);
   updateLead({});
   updateRail('GREET');

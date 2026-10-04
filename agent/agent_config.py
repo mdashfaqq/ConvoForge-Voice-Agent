@@ -39,6 +39,17 @@ class Personality(BaseModel):
 class AgentGoal(BaseModel):
     type: str
     description: str
+    title: str | None = None
+
+
+class EmptyState(BaseModel):
+    eyebrow: str = "READY WHEN YOU ARE"
+    title: str = "How can I help?"
+    description: str = "Tell me what you need and I will help with the next useful step."
+
+
+class AgentUI(BaseModel):
+    empty_state: EmptyState = Field(default_factory=EmptyState)
 
 
 class AgentConfig(BaseModel):
@@ -52,6 +63,8 @@ class AgentConfig(BaseModel):
     fields: list[AgentField] = Field(default_factory=list)
     actions: list[str] = Field(default_factory=list)
     rules: list[str] = Field(default_factory=list)
+    guardrails: list[str] = Field(default_factory=list)
+    ui: AgentUI = Field(default_factory=AgentUI)
     voice: dict[str, Any] = Field(default_factory=dict)
 
     @property
