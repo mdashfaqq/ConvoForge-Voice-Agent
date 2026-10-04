@@ -33,12 +33,15 @@ fields:
   - id: date
     label: reservation date
     type: date
+    required: true
   - id: time
     label: reservation time
     type: time
+    required: true
   - id: party_size
     label: party size
     type: number
+    required: true
   - id: special_requests
     label: special requests
     type: string

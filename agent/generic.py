@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from threading import Lock
 from typing import Any
@@ -9,11 +10,14 @@ from agent.agent_config import AgentConfig
 from agent.llm import LLMClient, build_llm_client, parse_json_object
 from config import get_settings
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class GenericSession:
     session_id: str
     agent_id: str
+    agent_config_version: str
     goal: str
     fields: dict[str, Any] = field(default_factory=dict)
     history: list[dict[str, str]] = field(default_factory=list)
@@ -21,6 +25,8 @@ class GenericSession:
     last_intent: str | None = None
     language: str = "english"
     confidence: float = 0.0
+    current_action: str | None = None
+    action_results: dict[str, Any] = field(default_factory=dict)
     ended: bool = False
 
     def record(self, role: str, content: str) -> None:
@@ -35,13 +41,22 @@ class GenericSessionStore:
     def get_or_create(self, session_id: str, config: AgentConfig) -> GenericSession:
         with self._lock:
             session = self._sessions.get(session_id)
-            if session is None or session.agent_id != config.id:
-                session = GenericSession(session_id, config.id, config.goal.type)
+            if (
+                session is None
+                or session.agent_id != config.id
+                or session.agent_config_version != config.version
+            ):
+                session = GenericSession(
+                    session_id,
+                    config.id,
+                    config.version,
+                    config.goal.type,
+                )
                 self._sessions[session_id] = session
             return session
 
 
-class VoiceAgent:
+class ConvoForgeAgent:
     """Domain-agnostic conversation engine driven by AgentConfig."""
 
     def __init__(
@@ -56,6 +71,7 @@ class VoiceAgent:
         self.temperature = (
             temperature if temperature is not None else get_settings().agent_temperature
         )
+        self.debug_prompts = get_settings().debug_prompts
         self._llm = llm
         self._llm_error: Exception | None = None
         if llm is None:
@@ -86,8 +102,11 @@ class VoiceAgent:
             return self._payload(session, reply)
 
         try:
+            messages = self._messages(session)
+            if self.debug_prompts:
+                logger.debug("ConvoForge system prompt for %s: %s", self.config.id, messages[0]["content"])
             raw = self.llm.complete(
-                self._messages(session),
+                messages,
                 temperature=self.temperature,
                 json_mode=True,
             )
@@ -103,7 +122,7 @@ class VoiceAgent:
         session.last_intent = session.current_intent
         session.current_intent = str(data.get("intent") or "unknown")
         session.confidence = float(data.get("confidence") or 0.0)
-        extracted = data.get("fields") or {}
+        extracted = data.get("extracted") or data.get("fields") or {}
         if isinstance(extracted, dict):
             for field_id, value in extracted.items():
                 if value not in (None, "") and any(
@@ -112,6 +131,9 @@ class VoiceAgent:
                     session.fields[field_id] = value
         if bool(data.get("end")) or session.current_intent in {"goodbye", "cancellation"}:
             session.ended = True
+        session.current_action = str(data.get("action") or "") or None
+        if isinstance(data.get("action_result"), dict) and session.current_action:
+            session.action_results[session.current_action] = data["action_result"]
         session.record("assistant", reply.strip())
         return self._payload(session, reply.strip())
 
@@ -135,6 +157,9 @@ class VoiceAgent:
                 "goal": self.config.goal.model_dump(),
                 "actions": self.config.actions,
                 "rules": self.config.rules,
+                "guardrails": self.config.guardrails,
+                "languages": [item.model_dump() for item in self.config.languages],
+                "voice": self.config.voice,
                 "greeting": self.config.greeting,
                 "closing": self.config.closing,
             },
@@ -158,8 +183,10 @@ class VoiceAgent:
             "response_schema": {
                 "reply": "string",
                 "intent": "greeting|question|answer|correction|request|complaint|objection|confirmation|rejection|cancellation|handoff|callback|goodbye|unknown",
-                "fields": "object containing only configured field ids",
+                "extracted": "object containing only configured field ids",
+                "fields": "accepted alias for extracted",
                 "confidence": "number between 0 and 1",
+                "action": "one configured action or null; do not execute it automatically",
                 "end": "boolean",
             },
         }
@@ -197,4 +224,10 @@ class VoiceAgent:
             "goal": self.config.goal.model_dump(),
             "conversation_intent": session.current_intent,
             "confidence": session.confidence,
+            "agent_config_version": session.agent_config_version,
+            "current_action": session.current_action,
+            "action_results": session.action_results,
         }
+
+
+VoiceAgent = ConvoForgeAgent

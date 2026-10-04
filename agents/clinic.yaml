@@ -34,8 +34,8 @@ fields:
     label: patient name
     type: string
     required: true
-  - id: doctor
-    label: doctor or specialty
+  - id: specialty
+    label: medical specialty
     type: string
   - id: appointment_date
     label: appointment date

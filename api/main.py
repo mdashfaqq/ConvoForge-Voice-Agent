@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -17,20 +18,29 @@ app.mount("/assets", StaticFiles(directory=WEB_ROOT), name="assets")
 store = SessionStore()
 _agent: SalesAgent | VoiceAgent | None = None
 _generic_store = GenericSessionStore()
+_agents: dict[str, VoiceAgent] = {}
+AGENTS_ROOT = Path(__file__).resolve().parent.parent / "agents"
 
 
-def get_agent() -> SalesAgent | VoiceAgent:
+def get_agent(agent_id: str | None = None) -> SalesAgent | VoiceAgent:
     global _agent
-    if _agent is None:
-        settings = get_settings()
+    if agent_id is None and _agent is not None:
+        return _agent
+    settings = get_settings()
+    if agent_id is None:
         config_path = Path(settings.agent_config)
-        if not config_path.is_absolute():
-            config_path = Path(__file__).resolve().parent.parent / config_path
-        _agent = VoiceAgent(
-            config=load_agent_config(config_path),
-            store=_generic_store,
-        )
-    return _agent
+    else:
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", agent_id):
+            raise HTTPException(status_code=400, detail="Invalid agent id")
+        config_path = AGENTS_ROOT / f"{agent_id}.yaml"
+    if not config_path.is_absolute():
+        config_path = Path(__file__).resolve().parent.parent / config_path
+    config = load_agent_config(config_path)
+    if agent_id and config.id != agent_id:
+        raise HTTPException(status_code=400, detail="Agent configuration id mismatch")
+    if config.id not in _agents:
+        _agents[config.id] = VoiceAgent(config=config, store=_generic_store)
+    return _agents[config.id]
 
 
 class ChatRequest(BaseModel):
@@ -59,6 +69,9 @@ class ChatResponse(BaseModel):
     agent_role: str | None = None
     goal: dict = Field(default_factory=dict)
     confidence: float = 0.0
+    agent_config_version: str | None = None
+    current_action: str | None = None
+    action_results: dict = Field(default_factory=dict)
 
 
 @app.get("/", include_in_schema=False)
@@ -72,8 +85,8 @@ def health() -> dict:
 
 
 @app.get("/agent-config")
-def agent_config() -> dict:
-    agent = get_agent()
+def agent_config(agent_id: str | None = None) -> dict:
+    agent = get_agent(agent_id)
     if isinstance(agent, VoiceAgent):
         return agent.config.model_dump()
     return {"id": "quickloan", "name": "Priya", "role": "Sales representative"}
@@ -82,9 +95,7 @@ def agent_config() -> dict:
 @app.post("/chat", response_model=ChatResponse)
 def chat(body: ChatRequest) -> ChatResponse:
     try:
-        active_agent = get_agent()
-        if body.agent_id and isinstance(active_agent, VoiceAgent) and body.agent_id != active_agent.config.id:
-            raise HTTPException(status_code=400, detail="Requested agent is not active")
+        active_agent = get_agent(body.agent_id)
         result = active_agent.chat(
             body.session_id,
             body.message,

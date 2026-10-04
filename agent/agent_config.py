@@ -61,6 +61,7 @@ class LanguageOption(BaseModel):
 
 class AgentConfig(BaseModel):
     id: str
+    version: str = "1"
     name: str
     role: str
     greeting: str = "How can I help you today?"
