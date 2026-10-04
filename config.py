@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     agent_temperature: float = 0.4
     simulator_temperature: float = 0.7
     prompt_version: str = "v1"
+    agent_config: str = "agents/quickloan.yaml"
 
     supabase_url: str = ""
     supabase_service_role_key: str = ""

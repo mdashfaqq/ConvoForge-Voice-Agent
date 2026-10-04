@@ -45,6 +45,11 @@ class QualificationFields(BaseModel):
 
 class TurnSignals(BaseModel):
     extracted: QualificationFields = Field(default_factory=QualificationFields)
+    question: bool = False
+    correction: bool = False
+    new_information: bool = False
+    request_continue: bool = False
+    customer_requested_end: bool = False
     customer_busy: bool = False
     objection: bool = False
     not_interested: bool = False
@@ -67,6 +72,14 @@ class Session(BaseModel):
     def record(self, role: str, content: str) -> None:
         self.transcript.append({"role": role, "content": content})
 
+    @property
+    def qualification_complete(self) -> bool:
+        return self.fields.is_complete()
+
+    @property
+    def conversation_complete(self) -> bool:
+        return self.state == AgentState.END
+
 
 def next_state(session: Session, signals: TurnSignals) -> AgentState:
     """Pure state transition used by the agent and unit tests."""
@@ -79,7 +92,7 @@ def next_state(session: Session, signals: TurnSignals) -> AgentState:
         session.ended_reason = "busy_callback"
         return AgentState.END
 
-    if signals.not_interested or signals.conversation_end:
+    if signals.not_interested or signals.conversation_end or signals.customer_requested_end:
         session.ended_reason = session.ended_reason or "declined"
         if session.state == AgentState.CLOSE:
             return AgentState.END
@@ -88,6 +101,15 @@ def next_state(session: Session, signals: TurnSignals) -> AgentState:
     if signals.objection:
         session.objection_handled = True
         return AgentState.HANDLE_OBJECTION
+
+    active_customer_intent = (
+        signals.question
+        or signals.correction
+        or signals.new_information
+        or signals.request_continue
+    )
+    if active_customer_intent and session.state == AgentState.CLOSE:
+        return AgentState.QUALIFY
 
     if session.state == AgentState.GREET:
         return AgentState.QUALIFY if not session.fields.is_complete() else AgentState.CLOSE

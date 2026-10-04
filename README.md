@@ -1,7 +1,7 @@
-# SalesVoice Eval
+# ConvoForge
 
-🚀 **Live Demo**: [https://salesvoice-eval-production.up.railway.app](https://salesvoice-eval-production.up.railway.app)
-LLM-powered loan-lead qualifier ("Priya" at QuickLoan) plus an automated evaluation harness: simulated customers, LLM-as-judge scores, PostgreSQL storage, and SQL comparisons of prompt versions.
+🚀 **Live Demo**: [https://convoforge.up.railway.app](https://convoforge.up.railway.app)
+Configurable AI voice-agent framework with QuickLoan, Clinic, and Restaurant demonstration profiles.
 
 ## Problem
 
@@ -9,7 +9,9 @@ Voice-style sales agents fail in ways a single demo call will not show: they inv
 
 ## Project Summary
 
-SalesVoice Eval is an agentic LLM sales workflow for loan-lead qualification. The agent moves through `GREET`, `QUALIFY`, `HANDLE_OBJECTION`, and `CLOSE` stages using persona shaping, role prompting, few-shot examples, and versioned prompt templates. It supports Hugging Face, OpenAI, and Anthropic model providers.
+ConvoForge is a domain-agnostic conversation engine. Agent identity, personality, goals, fields, actions, rules, and voice settings are loaded from YAML profiles in `agents/`. It supports Hugging Face, OpenAI, and Anthropic model providers.
+
+QuickLoan is one profile, not a requirement of the engine. Change `AGENT_CONFIG` to `agents/clinic.yaml` or `agents/restaurant.yaml` to run the same engine for another domain.
 
 The evaluation harness simulates diverse customers, including Hindi-English code-mixed conversations, and uses an LLM-as-judge to score task success, tone, objection handling, script adherence, and hallucination risk. PostgreSQL stores runs, transcripts, and scores, while SQL reports compare prompt versions and expose recurring failure patterns.
 
@@ -19,7 +21,7 @@ The evaluation harness simulates diverse customers, including Hindi-English code
 flowchart LR
     subgraph runtime [Runtime]
       API["FastAPI POST /chat"]
-      SM["State machine\nGREET to END"]
+      SM["Generic conversation engine"]
       LLM["Hugging Face, OpenAI, or Anthropic"]
       API --> SM --> LLM
     end
@@ -55,7 +57,7 @@ copy .env.example .env
 docker compose up -d
 ```
 
-Set `LLM_PROVIDER` to `huggingface`, `openai`, or `anthropic` and add the matching credential in `.env`.
+Set `LLM_PROVIDER` to `huggingface`, `openai`, or `anthropic`, add the matching credential, and select an agent profile with `AGENT_CONFIG`.
 
 For Hugging Face, use the router-compatible model and token settings:
 
@@ -63,6 +65,7 @@ For Hugging Face, use the router-compatible model and token settings:
 LLM_PROVIDER=huggingface
 HF_TOKEN=your_huggingface_token
 HF_MODEL=Qwen/Qwen2.5-72B-Instruct
+AGENT_CONFIG=agents/quickloan.yaml
 ```
 
 ## How to run

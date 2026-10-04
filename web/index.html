@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111a2b">
-  <title>QuickLoan Voice Desk</title>
+  <title>ConvoForge Voice Agent</title>
   <link rel="stylesheet" href="/assets/styles.css">
   <link rel="stylesheet" href="/assets/modern.css">
 </head>
@@ -12,16 +12,16 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Workspace navigation">
       <div class="brand-lockup">
-        <div class="brand-mark" aria-hidden="true">Q</div>
+        <div class="brand-mark" aria-hidden="true">C</div>
         <div>
-          <strong>QuickLoan</strong>
-          <span>Voice desk</span>
+          <strong>ConvoForge</strong>
+          <span>Voice agent</span>
         </div>
       </div>
 
       <nav class="nav-list" aria-label="Primary">
         <a class="nav-item active" href="#conversation"><span class="nav-icon">◌</span>Conversation</a>
-        <a class="nav-item" href="#lead"><span class="nav-icon">◫</span>Lead details</a>
+        <a class="nav-item" href="#lead"><span class="nav-icon">◫</span>Context</a>
         <a class="nav-item" href="#quality"><span class="nav-icon">⌁</span>Quality</a>
       </nav>
 
@@ -34,7 +34,7 @@
     <main class="main-content">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Live qualification</p>
+          <p class="eyebrow">Live conversation</p>
           <h1>Conversation desk</h1>
         </div>
         <div class="topbar-actions">
@@ -46,7 +46,7 @@
       <div class="workspace-grid">
         <section class="conversation-panel" id="conversation" aria-label="Conversation">
           <div class="conversation-heading">
-            <div class="contact-chip"><span class="avatar">P</span><div><strong>Priya</strong><span>QuickLoan specialist</span></div></div>
+            <div class="contact-chip"><span class="avatar" id="agent-avatar">A</span><div><strong id="agent-name">Voice agent</strong><span id="agent-role">Conversation assistant</span></div></div>
             <span class="session-label" id="session-label">New session</span>
           </div>
 
@@ -58,8 +58,8 @@
           <div class="transcript" id="transcript" aria-live="polite">
             <div class="empty-state" id="empty-state">
               <span class="empty-kicker">Ready when you are</span>
-              <h2>Start the qualification call.</h2>
-              <p>Type a message or use the microphone. Priya will collect the five details needed for a specialist follow-up.</p>
+              <h2>Start a conversation.</h2>
+              <p>Type a message or use the microphone. Your assistant will understand the request and help with the next useful step.</p>
             </div>
           </div>
 
@@ -80,17 +80,11 @@
           </div>
         </section>
 
-        <aside class="details-column" id="lead" aria-label="Lead details">
+        <aside class="details-column" id="lead" aria-label="Conversation context">
           <section class="details-section lead-summary">
-            <div class="section-heading"><div><p class="eyebrow">Lead profile</p><h2>Qualification</h2></div><span class="completion" id="completion">0%</span></div>
+            <div class="section-heading"><div><p class="eyebrow">Conversation context</p><h2>Known details</h2></div><span class="completion" id="completion">0%</span></div>
             <div class="progress-track"><span id="progress-bar"></span></div>
-            <dl class="field-list" id="field-list">
-              <div class="field-row" data-field="name"><dt>Name</dt><dd>Waiting</dd></div>
-              <div class="field-row" data-field="city"><dt>City</dt><dd>Waiting</dd></div>
-              <div class="field-row" data-field="monthly_income"><dt>Monthly income</dt><dd>Waiting</dd></div>
-              <div class="field-row" data-field="loan_amount"><dt>Loan amount</dt><dd>Waiting</dd></div>
-              <div class="field-row" data-field="employment_type"><dt>Employment</dt><dd>Waiting</dd></div>
-            </dl>
+            <dl class="field-list" id="field-list"></dl>
           </section>
 
           <section class="details-section call-pulse" id="quality">
@@ -104,7 +98,7 @@
 
           <section class="tip-panel">
             <span class="tip-mark">i</span>
-            <div><strong>Voice mode is ready</strong><p>Use the mic to speak. Your browser transcribes the turn before sending it to Priya.</p></div>
+            <div><strong>Voice mode is ready</strong><p>Use the mic to speak. Your browser transcribes the turn before sending it to the assistant.</p></div>
           </section>
         </aside>
       </div>

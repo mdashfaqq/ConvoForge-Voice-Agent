@@ -20,6 +20,11 @@ After the customer's latest message, return JSON with this schema:
     "last_user_intent": string or null,
     "clarification_needed": string or null,
     "user_declined_field": string or null,
+    "question": boolean,
+    "correction": boolean,
+    "new_information": boolean,
+    "request_continue": boolean,
+    "customer_requested_end": boolean,
   "customer_busy": boolean,
   "objection": boolean,
   "not_interested": boolean,
@@ -104,25 +109,40 @@ class SalesAgent:
             session.record("assistant", reply)
             return _payload(session, reply)
 
-        raw = self.llm.complete(
-            [
-                {
-                    "role": "system",
-                    "content": (
-                        render_system_prompt(session)
-                        + EXTRACT_INSTRUCTIONS
-                        + _language_instruction(language)
-                    ),
-                },
-                *[{"role": turn["role"], "content": turn["content"]} for turn in session.transcript],
-            ],
-            temperature=self.temperature,
-            json_mode=True,
-        )
-        data = parse_json_object(raw)
-        model_fields = QualificationFields.model_validate(data.get("extracted") or {})
+        try:
+            raw = self.llm.complete(
+                [
+                    {
+                        "role": "system",
+                        "content": (
+                            render_system_prompt(session)
+                            + EXTRACT_INSTRUCTIONS
+                            + _language_instruction(language)
+                        ),
+                    },
+                    *[
+                        {"role": turn["role"], "content": turn["content"]}
+                        for turn in session.transcript
+                    ],
+                ],
+                temperature=self.temperature,
+                json_mode=True,
+            )
+            data = parse_json_object(raw)
+            if not isinstance(data.get("reply"), str) or not data["reply"].strip():
+                raise ValueError("LLM response did not contain a non-empty reply")
+            model_fields = QualificationFields.model_validate(data.get("extracted") or {})
+        except Exception:  # noqa: BLE001 - malformed/provider output uses safe fallback
+            reply = _fallback_reply(session)
+            session.record("assistant", reply)
+            return _payload(session, reply)
         signals = TurnSignals(
             extracted=model_fields,
+            question=bool(data.get("question")),
+            correction=bool(data.get("correction")),
+            new_information=bool(data.get("new_information")),
+            request_continue=bool(data.get("request_continue")),
+            customer_requested_end=bool(data.get("customer_requested_end")),
             customer_busy=bool(data.get("customer_busy")),
             objection=bool(data.get("objection")),
             not_interested=bool(data.get("not_interested")),
@@ -138,11 +158,11 @@ class SalesAgent:
             session.declined_fields.append(declined_field)
         session.state = next_state(session, signals)
         reply = str(data.get("reply") or "").strip() or _fallback_reply(session)
-        if session.fields.is_complete() and session.state == AgentState.CLOSE:
-            reply = _fallback_reply(session)
         session.record("assistant", reply)
         if session.state == AgentState.CLOSE and (
-            signals.not_interested or signals.conversation_end
+            signals.not_interested
+            or signals.conversation_end
+            or signals.customer_requested_end
         ):
             session.state = AgentState.END
         return _payload(session, reply)
@@ -165,6 +185,8 @@ def _payload(session: Session, reply: str) -> dict:
         "collected": session.fields.model_dump(),
         "missing": session.fields.missing(),
         "ended_reason": session.ended_reason,
+        "qualification_complete": session.qualification_complete,
+        "conversation_complete": session.conversation_complete,
         "conversation_intent": session.conversation_intent,
         "last_user_intent": session.last_user_intent,
         "clarification_needed": session.clarification_needed,

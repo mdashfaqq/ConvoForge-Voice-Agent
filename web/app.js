@@ -5,6 +5,7 @@ const state = {
   listening: false,
   busy: false,
   handsFree: false,
+  agentConfig: null,
 };
 
 const transcript = document.querySelector('#transcript');
@@ -19,13 +20,35 @@ const connectionLabel = document.querySelector('#connection-label');
 const languageSelect = document.querySelector('#language-select');
 const handsfreeToggle = document.querySelector('#handsfree-toggle');
 
-const labels = {
-  name: 'Name',
-  city: 'City',
-  monthly_income: 'Monthly income',
-  loan_amount: 'Loan amount',
-  employment_type: 'Employment',
-};
+let labels = {};
+
+function renderAgentFields(fields = []) {
+  const list = document.querySelector('#field-list');
+  labels = Object.fromEntries(fields.map((field) => [field.id, field.label]));
+  list.innerHTML = fields.map((field) => (
+    `<div class="field-row" data-field="${field.id}"><dt>${field.label}</dt><dd>Waiting</dd></div>`
+  )).join('');
+}
+
+async function loadAgentConfig() {
+  try {
+    const response = await fetch('/agent-config');
+    if (!response.ok) throw new Error('Agent configuration unavailable');
+    const config = await response.json();
+    state.agentConfig = config;
+    document.title = `${config.name} | ConvoForge`;
+    document.querySelector('#agent-name').textContent = config.name;
+    document.querySelector('#agent-role').textContent = config.role;
+    document.querySelector('#agent-avatar').textContent = config.name.slice(0, 1).toUpperCase();
+    document.querySelector('#prompt-version').textContent = config.goal?.type || 'active';
+    renderAgentFields(config.fields || []);
+    const emptyCopy = document.querySelector('#empty-state p');
+    if (emptyCopy) emptyCopy.textContent = config.goal?.description || 'Tell me what you need help with.';
+  } catch (error) {
+    connectionLabel.textContent = 'Configuration issue';
+    showError(error.message);
+  }
+}
 
 function addMessage(role, text) {
   emptyState?.remove();
@@ -68,7 +91,7 @@ function updateLead(fields = {}) {
     row.classList.toggle('filled', Boolean(value));
     if (value) complete += 1;
   });
-  const percent = Math.round((complete / total) * 100);
+  const percent = total ? Math.round((complete / total) * 100) : 0;
   document.querySelector('#completion').textContent = `${percent}%`;
   document.querySelector('#progress-bar').style.width = `${percent}%`;
 }
@@ -76,10 +99,11 @@ function updateLead(fields = {}) {
 function updateRail(nextState) {
   state.currentState = nextState;
   const labelsByState = {
+    ACTIVE: 'Listening for what matters to you',
     GREET: 'Getting to know what you need',
     QUALIFY: 'Listening for what matters to you',
     HANDLE_OBJECTION: 'Working through your question',
-    CLOSE: 'Preparing a specialist follow-up',
+    CLOSE: 'Preparing the next useful step',
     END: 'Conversation complete',
   };
   const mode = document.querySelector('#conversation-mode');
@@ -172,7 +196,7 @@ resetButton.addEventListener('click', () => {
   transcript.innerHTML = '';
   const fresh = document.createElement('div');
   fresh.className = 'empty-state';
-  fresh.innerHTML = '<span class="empty-kicker">Ready when you are</span><h2>Start the qualification call.</h2><p>Type a message or use the microphone. Priya will collect the five details needed for a specialist follow-up.</p>';
+  fresh.innerHTML = '<span class="empty-kicker">Ready when you are</span><h2>Start a conversation.</h2><p>Tell the assistant what you need help with, by voice or text.</p>';
   transcript.append(fresh);
   updateLead({});
   updateRail('GREET');
@@ -317,3 +341,5 @@ handsfreeToggle.addEventListener('change', () => {
   state.handsFree = handsfreeToggle.checked;
   voiceStatus.textContent = state.handsFree ? 'Hands-free mode enabled' : 'Text or voice input';
 });
+
+loadAgentConfig();
