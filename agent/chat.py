@@ -13,14 +13,25 @@ After the customer's latest message, return JSON with this schema:
     "city": string or null,
     "monthly_income": string or null,
     "loan_amount": string or null,
-    "employment_type": string or null
+        "employment_type": string or null,
+        "loan_purpose": string or null
   },
+    "conversation_intent": "greeting|answer|question|correction|clarification|objection|busy|decline|other",
+    "last_user_intent": string or null,
+    "clarification_needed": string or null,
+    "user_declined_field": string or null,
   "customer_busy": boolean,
   "objection": boolean,
   "not_interested": boolean,
   "conversation_end": boolean
 }
-Only fill extracted fields that the customer actually stated. Never invent values.
+Sound like a thoughtful human sales specialist, not a form or a chatbot. Acknowledge
+what the customer just said before asking the next question. Use natural contractions,
+short sentences, and varied wording. Ask only one clear question per turn. Do not repeat
+your introduction, the customer's name, or a question they already answered. Do not use
+bullet points, labels, stage names, or robotic phrases such as "please provide the
+following information" in the spoken reply.
+Only fill extracted fields that the customer actually stated or clearly corrected. Never invent values.
 Interpret the customer's meaning, not just exact keywords. A customer can answer with a
 sentence, a short answer, or a correction to an earlier answer. If they say they are a
 student or are not earning yet, record employment_type as "student" and monthly_income as
@@ -28,14 +39,22 @@ student or are not earning yet, record employment_type as "student" and monthly_
 supporter's income in monthly_income and keep employment_type as the customer's situation.
 Do not treat "I am a student" or equivalent employment statements as the customer's name.
 Accept numbers expressed as words, Indian lakh/crore notation, or digits for loan and income.
+Treat unclear financial amounts as uncertain. If "5" could mean 5,000 or 50,000, leave
+that field null, set clarification_needed to the exact ambiguity, and ask naturally.
+Interpret likely voice transcription mistakes such as "30 lights" as a possibility, not a
+fact: ask for confirmation before storing the amount. If the customer asks a question,
+answer it first. If they say sorry, wait, actually, or change the subject, acknowledge
+that intent rather than repeating the previous question. If they decline a field, respect
+that and continue with information they are comfortable sharing.
 Do not ask again for a field that is already answered, including a zero income.
 Before responding, review every customer turn in the transcript and validate that each
 answered field is present in extracted. For example, if the customer says they are a
 student and are not earning yet, extracted must include employment_type="student" and
 monthly_income="0"; asking for monthly income again is incorrect.
 If all five fields are present after extraction, set the reply as a brief closing summary
-and say a specialist will follow up. Do not ask a confirmation question or request another
-field when all five fields are complete.
+and say a specialist will follow up, unless the customer is asking a question, correcting
+something, or raising an objection that needs a direct response first. Do not ask a
+confirmation question or request another field when all five fields are complete.
 If they ask for an interest rate, set objection=true and do not quote a number.
 If they are busy, set customer_busy=true and offer a callback in reply.
 """
@@ -109,6 +128,14 @@ class SalesAgent:
             not_interested=bool(data.get("not_interested")),
             conversation_end=bool(data.get("conversation_end")),
         )
+        session.conversation_intent = str(
+            data.get("conversation_intent") or session.conversation_intent or "other"
+        )
+        session.last_user_intent = str(data.get("last_user_intent") or "") or None
+        session.clarification_needed = str(data.get("clarification_needed") or "") or None
+        declined_field = str(data.get("user_declined_field") or "").strip()
+        if declined_field and declined_field not in session.declined_fields:
+            session.declined_fields.append(declined_field)
         session.state = next_state(session, signals)
         reply = str(data.get("reply") or "").strip() or _fallback_reply(session)
         if session.fields.is_complete() and session.state == AgentState.CLOSE:
@@ -138,6 +165,10 @@ def _payload(session: Session, reply: str) -> dict:
         "collected": session.fields.model_dump(),
         "missing": session.fields.missing(),
         "ended_reason": session.ended_reason,
+        "conversation_intent": session.conversation_intent,
+        "last_user_intent": session.last_user_intent,
+        "clarification_needed": session.clarification_needed,
+        "declined_fields": session.declined_fields,
     }
 
 

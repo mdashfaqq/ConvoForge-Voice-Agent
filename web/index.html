@@ -50,14 +50,9 @@
             <span class="session-label" id="session-label">New session</span>
           </div>
 
-          <div class="state-rail" aria-label="Conversation progress">
-            <div class="state-step current" data-state="GREET"><span>01</span><label>Greet</label></div>
-            <div class="state-line"></div>
-            <div class="state-step" data-state="QUALIFY"><span>02</span><label>Qualify</label></div>
-            <div class="state-line"></div>
-            <div class="state-step" data-state="HANDLE_OBJECTION"><span>03</span><label>Objection</label></div>
-            <div class="state-line"></div>
-            <div class="state-step" data-state="CLOSE"><span>04</span><label>Close</label></div>
+          <div class="conversation-mode" aria-live="polite">
+            <span class="mode-dot" aria-hidden="true"></span>
+            <span id="conversation-mode">Getting to know what you need</span>
           </div>
 
           <div class="transcript" id="transcript" aria-live="polite">

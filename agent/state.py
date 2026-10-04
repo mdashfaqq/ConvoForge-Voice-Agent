@@ -27,6 +27,7 @@ class QualificationFields(BaseModel):
     monthly_income: Optional[str] = None
     loan_amount: Optional[str] = None
     employment_type: Optional[str] = None
+    loan_purpose: Optional[str] = None
 
     def merge(self, other: "QualificationFields") -> "QualificationFields":
         data = self.model_dump()
@@ -58,6 +59,10 @@ class Session(BaseModel):
     objection_handled: bool = False
     transcript: list[dict] = Field(default_factory=list)
     ended_reason: Optional[str] = None
+    conversation_intent: Optional[str] = None
+    last_user_intent: Optional[str] = None
+    clarification_needed: Optional[str] = None
+    declined_fields: list[str] = Field(default_factory=list)
 
     def record(self, role: str, content: str) -> None:
         self.transcript.append({"role": role, "content": content})

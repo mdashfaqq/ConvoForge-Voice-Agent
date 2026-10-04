@@ -75,13 +75,15 @@ function updateLead(fields = {}) {
 
 function updateRail(nextState) {
   state.currentState = nextState;
-  const order = ['GREET', 'QUALIFY', 'HANDLE_OBJECTION', 'CLOSE'];
-  const activeIndex = order.indexOf(nextState);
-  document.querySelectorAll('.state-step').forEach((step) => {
-    const index = order.indexOf(step.dataset.state);
-    step.classList.toggle('current', step.dataset.state === nextState);
-    step.classList.toggle('done', index >= 0 && index < activeIndex);
-  });
+  const labelsByState = {
+    GREET: 'Getting to know what you need',
+    QUALIFY: 'Listening for what matters to you',
+    HANDLE_OBJECTION: 'Working through your question',
+    CLOSE: 'Preparing a specialist follow-up',
+    END: 'Conversation complete',
+  };
+  const mode = document.querySelector('#conversation-mode');
+  if (mode) mode.textContent = labelsByState[nextState] || labelsByState.QUALIFY;
 }
 
 function setBusy(busy) {
@@ -138,8 +140,23 @@ function speak(text, language = 'english') {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = language === 'hindi' ? 'hi-IN' : 'en-IN';
-  utterance.rate = 1;
+  const voiceLanguage = language === 'hindi' ? 'hi-IN' : 'en-IN';
+  utterance.lang = voiceLanguage;
+  utterance.rate = 0.96;
+  utterance.pitch = 1;
+  utterance.volume = 0.95;
+  const voices = window.speechSynthesis.getVoices();
+  utterance.voice = voices.find((voice) => voice.lang === voiceLanguage)
+    || voices.find((voice) => voice.lang.startsWith(voiceLanguage.slice(0, 2)))
+    || null;
+  utterance.onstart = () => {
+    if (state.handsFree) voiceStatus.textContent = 'Speaking...';
+  };
+  utterance.onend = () => {
+    if (state.handsFree && state.currentState !== 'END' && !state.busy) {
+      window.startVoiceCapture?.();
+    }
+  };
   window.speechSynthesis.speak(utterance);
 }
 
@@ -165,47 +182,130 @@ resetButton.addEventListener('click', () => {
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SpeechRecognition) {
+  const SILENCE_TIMEOUT = 2000;
   const recognition = new SpeechRecognition();
   recognition.lang = 'en-IN';
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.interimResults = true;
   recognition.maxAlternatives = 3;
   let finalTranscript = '';
+  let interimTranscript = '';
+  let shouldKeepListening = false;
+  let silenceTimer = null;
+  let restartTimer = null;
+
+  const clearListeningTimers = () => {
+    window.clearTimeout(silenceTimer);
+    window.clearTimeout(restartTimer);
+    silenceTimer = null;
+    restartTimer = null;
+  };
+
+  const currentTranscript = () => `${finalTranscript} ${interimTranscript}`.trim();
+
+  const finishListening = (submit = false) => {
+    shouldKeepListening = false;
+    clearListeningTimers();
+    const heard = currentTranscript();
+    state.listening = false;
+    micButton.classList.remove('active');
+    voiceStatus.classList.remove('listening');
+    try {
+      recognition.stop();
+    } catch {
+      // The recognition engine may already have ended itself.
+    }
+    if (!heard || state.busy) {
+      voiceStatus.textContent = 'Text or voice input';
+      return;
+    }
+    input.value = heard;
+    if (submit) {
+      voiceStatus.textContent = 'Processing...';
+      sendMessage(heard);
+    } else {
+      voiceStatus.textContent = 'Review the transcript, then press Send';
+    }
+  };
+
+  const scheduleSilenceStop = () => {
+    window.clearTimeout(silenceTimer);
+    silenceTimer = window.setTimeout(() => finishListening(state.handsFree), SILENCE_TIMEOUT);
+  };
+
+  const startListening = () => {
+    if (state.busy || state.listening) return;
+    shouldKeepListening = true;
+    finalTranscript = '';
+    interimTranscript = '';
+    input.value = '';
+    try {
+      recognition.start();
+    } catch {
+      voiceStatus.textContent = 'Still listening...';
+    }
+  };
+
+  window.startVoiceCapture = startListening;
+
   recognition.onstart = () => {
     recognition.lang = languageSelect.value === 'hindi' ? 'hi-IN' : 'en-IN';
-    finalTranscript = '';
-    input.value = '';
     state.listening = true;
     micButton.classList.add('active');
     voiceStatus.textContent = 'Listening...';
     voiceStatus.classList.add('listening');
+    scheduleSilenceStop();
   };
   recognition.onresult = (event) => {
-    let interimTranscript = '';
+    interimTranscript = '';
     for (let index = event.resultIndex; index < event.results.length; index += 1) {
       const result = event.results[index];
       const transcriptText = result[0].transcript;
-      if (result.isFinal) finalTranscript += `${transcriptText} `;
+      if (result.isFinal) {
+        const finalizedText = transcriptText.trim();
+        const existingText = finalTranscript.trim();
+        if (finalizedText && !existingText.endsWith(finalizedText)) {
+          finalTranscript = `${existingText} ${finalizedText}`.trim();
+        }
+      }
       else interimTranscript += transcriptText;
     }
     input.value = `${finalTranscript}${interimTranscript}`.trim();
-    voiceStatus.textContent = interimTranscript ? 'Hearing you...' : 'Reviewing your words...';
+    voiceStatus.textContent = interimTranscript ? 'Still listening...' : 'Listening...';
+    scheduleSilenceStop();
   };
-  recognition.onerror = () => {
-    voiceStatus.textContent = 'Could not hear that. Try again or type instead.';
+  recognition.onerror = (event) => {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      finishListening(false);
+      voiceStatus.textContent = 'Microphone permission is required for voice input.';
+      return;
+    }
+    if (shouldKeepListening) {
+      voiceStatus.textContent = 'Still listening...';
+      scheduleSilenceStop();
+    }
   };
   recognition.onend = () => {
-    const heard = finalTranscript.trim();
-    state.listening = false;
-    micButton.classList.remove('active');
-    voiceStatus.classList.remove('listening');
-    if (heard && !state.busy && state.handsFree) sendMessage(heard);
-    else if (heard && !state.busy) voiceStatus.textContent = 'Review the transcript, then press Send';
-    else if (!state.busy) voiceStatus.textContent = 'Text or voice input';
+    if (shouldKeepListening && !state.busy) {
+      voiceStatus.textContent = 'Still listening...';
+      restartTimer = window.setTimeout(() => {
+        try {
+          recognition.start();
+        } catch {
+          scheduleSilenceStop();
+        }
+      }, 120);
+      return;
+    }
+    if (!shouldKeepListening) {
+      state.listening = false;
+      micButton.classList.remove('active');
+      voiceStatus.classList.remove('listening');
+    }
   };
   micButton.addEventListener('click', () => {
-    if (state.listening) recognition.stop();
-    else recognition.start();
+    if (state.listening) finishListening(state.handsFree);
+    else startListening();
   });
 } else {
   micButton.disabled = true;

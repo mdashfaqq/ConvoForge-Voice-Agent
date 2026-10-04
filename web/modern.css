@@ -28,6 +28,8 @@ body { background: var(--paper); }
 .workspace-grid { grid-template-columns: minmax(0, 1.65fr) minmax(310px, .78fr); gap: 26px; }
 .conversation-panel, .details-section { border-color: rgba(205, 213, 221, .9); box-shadow: var(--shadow); }
 .conversation-panel { min-height: 700px; border-radius: 16px; }
+.conversation-mode { display: flex; align-items: center; gap: 9px; padding: 16px 26px; border-top: 1px solid #eef1f3; border-bottom: 1px solid #eef1f3; color: var(--muted); background: #fbfcfc; font: 11px 'DM Mono', monospace; }
+.mode-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 5px rgba(217, 97, 73, .11); }
 .conversation-heading { padding: 20px 26px; }
 .contact-chip .avatar { width: 40px; height: 40px; display: grid; place-items: center; background: #f6c4b5; box-shadow: inset 0 0 0 4px #fff; }
 .session-label { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fafbfc; }

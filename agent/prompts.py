@@ -26,11 +26,19 @@ def render_system_prompt(session: Session) -> str:
 
     missing = ", ".join(session.fields.missing()) or "none"
     collected = json.dumps(session.fields.model_dump())
+    recent_assistant_turns = [
+        turn["content"] for turn in session.transcript if turn["role"] == "assistant"
+    ][-3:]
     return (
         f"{bundle['system'].strip()}\n\n"
         f"Current state: {session.state.value}\n"
         f"Collected fields: {collected}\n"
         f"Still missing: {missing}\n"
+        f"Conversation intent: {session.conversation_intent or 'unknown'}\n"
+        f"Last user intent: {session.last_user_intent or 'unknown'}\n"
+        f"Clarification needed: {session.clarification_needed or 'none'}\n"
+        f"Fields the customer declined: {json.dumps(session.declined_fields)}\n"
+        f"Recent Priya replies: {json.dumps(recent_assistant_turns)}\n"
         f"Ended reason: {session.ended_reason or 'n/a'}\n\n"
         "Few-shot examples:\n"
         + "\n".join(few_shot_lines)
@@ -42,13 +50,14 @@ def render_system_prompt(session: Session) -> str:
 def _state_instruction(state: AgentState) -> str:
     if state == AgentState.GREET:
         return (
-            "You are greeting the customer. Introduce yourself as Priya from QuickLoan "
-            "and ask for their name."
+            "Open naturally. If the customer already gave useful details, respond to those "
+            "details instead of restarting the introduction or asking for their name."
         )
     if state == AgentState.QUALIFY:
         return (
-            "Stay in qualification. Ask only for the next missing field. "
-            "Do not jump ahead or repeat fields you already have."
+            "Continue the conversation based on what the customer just meant. They may "
+            "answer any missing detail in any order; ask one relevant follow-up only when "
+            "needed, and never use a fixed field order."
         )
     if state == AgentState.HANDLE_OBJECTION:
         return (
