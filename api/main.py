@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import Literal
@@ -49,6 +49,66 @@ def frontend() -> FileResponse:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+def _speech_gather(response, action: str = "/voice/gather") -> None:
+    gather = response.gather(
+        input="speech",
+        action=action,
+        method="POST",
+        language="en-IN",
+        speech_timeout="auto",
+        timeout=5,
+    )
+    gather.say(
+        "Please tell me how I can help you with your loan requirement.",
+        language="en-IN",
+    )
+
+
+@app.post("/voice/incoming", include_in_schema=False)
+def voice_incoming() -> Response:
+    from twilio.twiml.voice_response import VoiceResponse
+
+    response = VoiceResponse()
+    response.say(
+        "Hello, this is Priya from QuickLoan. I would like to understand your loan requirement.",
+        language="en-IN",
+    )
+    _speech_gather(response)
+    return Response(content=str(response), media_type="application/xml")
+
+
+@app.post("/voice/gather", include_in_schema=False)
+async def voice_gather(request: Request) -> Response:
+    from twilio.twiml.voice_response import VoiceResponse
+
+    form = await request.form()
+    session_id = str(form.get("CallSid") or "voice-unknown")
+    speech = str(form.get("SpeechResult") or "").strip()
+    response = VoiceResponse()
+
+    if not speech:
+        response.say("I did not catch that. Please say that again.", language="en-IN")
+        _speech_gather(response)
+        return Response(content=str(response), media_type="application/xml")
+
+    try:
+        result = get_agent().chat(session_id, speech, language="english")
+    except RuntimeError:
+        response.say(
+            "I am sorry, the service is temporarily unavailable. Please try again later.",
+            language="en-IN",
+        )
+        response.hangup()
+        return Response(content=str(response), media_type="application/xml")
+
+    response.say(result["reply"], language="en-IN")
+    if result["state"] == "END":
+        response.hangup()
+    else:
+        _speech_gather(response)
+    return Response(content=str(response), media_type="application/xml")
 
 
 @app.post("/chat", response_model=ChatResponse)

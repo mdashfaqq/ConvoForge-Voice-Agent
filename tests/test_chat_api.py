@@ -36,3 +36,36 @@ def test_chat_endpoint_with_fake_llm():
     assert "Priya" in body["reply"]
     assert body["state"] == "QUALIFY"
     assert llm.calls == 1
+
+
+def test_incoming_voice_returns_speech_gather():
+    client = TestClient(api_main.app)
+
+    response = client.post("/voice/incoming")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/xml"
+    assert "<Gather" in response.text
+    assert 'action="/voice/gather"' in response.text
+
+
+def test_voice_gather_speaks_agent_reply():
+    store = SessionStore()
+    llm = FakeLLM(
+        '{"reply": "May I have your name?", "extracted": {}, '
+        '"customer_busy": false, "objection": false, '
+        '"not_interested": false, "conversation_end": false}'
+    )
+    api_main.store = store
+    api_main._agent = SalesAgent(store=store, llm=llm, prompt_version="v1")
+    client = TestClient(api_main.app)
+
+    response = client.post(
+        "/voice/gather",
+        data={"CallSid": "CA123", "SpeechResult": "Hello"},
+    )
+
+    assert response.status_code == 200
+    assert "May I have your name?" in response.text
+    assert "<Gather" in response.text
+    assert llm.calls == 1

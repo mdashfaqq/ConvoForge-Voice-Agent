@@ -14,6 +14,34 @@ class LLMClient(Protocol):
     ) -> str: ...
 
 
+class FallbackClient:
+    def __init__(self, primary: LLMClient, fallback: LLMClient) -> None:
+        self._primary = primary
+        self._fallback = fallback
+
+    def complete(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        temperature: float,
+        json_mode: bool = False,
+    ) -> str:
+        try:
+            return self._primary.complete(
+                messages, temperature=temperature, json_mode=json_mode
+            )
+        except RuntimeError as primary_error:
+            try:
+                return self._fallback.complete(
+                    messages, temperature=temperature, json_mode=json_mode
+                )
+            except Exception as fallback_error:
+                raise RuntimeError(
+                    f"Primary LLM failed ({primary_error}); fallback LLM failed "
+                    f"({fallback_error})"
+                ) from fallback_error
+
+
 class OpenAIClient:
     def __init__(self, settings: Settings) -> None:
         from openai import OpenAI
@@ -37,7 +65,10 @@ class OpenAIClient:
         }
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
-        response = self._client.chat.completions.create(**kwargs)
+        try:
+            response = self._client.chat.completions.create(**kwargs)
+        except Exception as exc:  # noqa: BLE001 - normalize provider failures for the API
+            raise RuntimeError(f"OpenAI request failed: {exc}") from exc
         return response.choices[0].message.content or ""
 
 
@@ -117,7 +148,10 @@ def build_llm_client(settings: Settings | None = None) -> LLMClient:
         return AnthropicClient(settings)
     if settings.llm_provider == "huggingface":
         return HuggingFaceClient(settings)
-    return OpenAIClient(settings)
+    primary = OpenAIClient(settings)
+    if settings.hf_token:
+        return FallbackClient(primary, HuggingFaceClient(settings))
+    return primary
 
 
 def parse_json_object(text: str) -> dict[str, Any]:
